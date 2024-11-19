@@ -59,7 +59,7 @@ This is a 3-tier application that determines user eligibility based on custom-de
 
 ---
 
-## Application 2: Weather Monitoring Application
+## Application 2: Real-Time Data Processing System for Weather Monitoring with Rollups and Aggregates
 
 ### Overview
 
