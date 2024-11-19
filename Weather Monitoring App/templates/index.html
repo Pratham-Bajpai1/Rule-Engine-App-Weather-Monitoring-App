@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Monitoring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <header>
+        <h1>Weather Monitoring System</h1>
+        <div class="toggle-container">
+            <label for="temp-toggle">Temperature Unit:</label>
+            <select id="temp-toggle" onchange="setPreference()">
+                <option value="C">Celsius</option>
+                <option value="F">Fahrenheit</option>
+            </select>
+        </div>
+        <button id="enable-alerts-btn" onclick="toggleForm()">Enable Alerts</button>
+        <form id="email-credentials-form" style="display: none;">
+            <input type="email" name="sender_email" placeholder="Sender Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="email" name="receiver_email" placeholder="Receiver Email" required>
+            <button type="submit">Set Email Credentials</button>
+        </form>
+    </header>
+
+    <main>
+        <!-- Daily Weather Summaries -->
+        <section id="daily-summary">
+            <h2>Daily Weather Summaries</h2>
+            <div class="scrollable-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>Date</th>
+                            <th>Avg Temp</th>
+                            <th>Max Temp</th>
+                            <th>Min Temp</th>
+                            <th>Dominant Weather</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-data"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 5-Day Weather Forecast -->
+        <section id="forecast">
+            <h2>5-Day Weather Forecast</h2>
+            <div class="scrollable-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Temperature</th>
+                            <th>Humidity</th>
+                            <th>Wind Speed</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="forecast-data"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Graphs Section -->
+        <section id="graphs">
+            <div>
+                <h3>Daily Weather Summaries</h3>
+                <div id="weather-summary-chart"></div>
+            </div>
+            <div>
+                <h3>Alerts Graph</h3>
+                <div id="alerts-chart"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        async function fetchWeatherSummary() {
+            const response = await fetch('/get_daily_summary');
+            const data = await response.json();
+            const summaryTable = document.getElementById('summary-data');
+            summaryTable.innerHTML = ''; 
+
+            data.forEach(row => {
+                const rowElement = `<tr>
+                    <td>${row[1]}</td>
+                    <td>${row[0]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[5]}</td>
+                </tr>`;
+                summaryTable.innerHTML += rowElement;
+            });
+        }
+
+        async function fetchWeatherForecast() {
+            const response = await fetch('/get_forecast');
+            const data = await response.json();
+            const forecastTable = document.getElementById('forecast-data');
+            forecastTable.innerHTML = ''; 
+
+            data.forEach(row => {
+                const rowElement = `<tr>
+                    <td>${row[0]}</td>
+                    <td>${row[2]} °C</td>
+                    <td>${row[3]}%</td>
+                    <td>${row[4]} m/s</td>
+                    <td>${row[5]}</td>
+                </tr>`;
+                forecastTable.innerHTML += rowElement;
+            });
+        }
+
+        async function plotWeatherSummaries() {
+            const response = await fetch('/get_visualization_data');
+            const data = await response.json();
+
+            if (!data.summaries.length) {
+                document.getElementById('weather-summary-chart').innerText = 'No weather data available.';
+                return;
+            }
+
+            const dates = data.summaries.map(summary => summary[1]);
+            const avgTemps = data.summaries.map(summary => summary[2]);
+
+            const summaryTrace = {
+                x: dates,
+                y: avgTemps,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Average Temperature'
+            };
+
+            Plotly.newPlot('weather-summary-chart', [summaryTrace]);
+
+            if (!data.alerts.length) {
+                document.getElementById('alerts-chart').innerText = 'No alerts available.';
+                return;
+            }
+
+            const alertsTrace = {
+                x: data.alerts.map(alert => alert[0]),
+                y: data.alerts.map(alert => alert[3]),
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Alerts'
+            };
+
+            Plotly.newPlot('alerts-chart', [alertsTrace]);
+        }
+
+        async function setPreference() {
+            const preference = document.getElementById('temp-toggle').value;
+            await fetch('/set_preference', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ preference })
+            });
+            fetchWeatherSummary();
+        }
+
+        function toggleForm() {
+            const form = document.getElementById('email-credentials-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        document.getElementById('email-credentials-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/set_email_credentials', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+        };
+
+        fetchWeatherSummary();
+        fetchWeatherForecast();
+        plotWeatherSummaries();
+        setInterval(fetchWeatherSummary, 300000);
+        setInterval(fetchWeatherForecast, 300000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rule Engine UI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Rule Engine with AST</h1>
+
+    <!-- Section for Creating a Rule -->
+    <section id="create-rule">
+        <h2>Create Rule</h2>
+        <form id="create-rule-form">
+            <label>Rule Name:</label>
+            <input type="text" id="rule-name" required>
+            <label>Rule String:</label>
+            <input type="text" id="rule-string" required>
+            <button type="submit">Create Rule</button>
+        </form>
+        <div id="create-rule-response"></div>
+    </section>
+
+    <!-- Section for Combining Rules -->
+    <section id="combine-rules">
+        <h2>Combine Rules</h2>
+        <form id="combine-rules-form">
+            <label>Rule Strings (comma-separated):</label>
+            <input type="text" id="combine-rules-input" required>
+            <label>Operators (comma-separated):</label>
+            <input type="text" id="combine-operators-input">
+            <button type="submit">Combine Rules</button>
+        </form>
+        <div id="combine-rules-response"></div>
+    </section>
+
+    <!-- Section for Evaluating Rule -->
+    <section id="evaluate-rule">
+        <h2>Evaluate Rule</h2>
+        <form id="evaluate-rule-form">
+            <label>Combined AST JSON:</label>
+            <textarea id="combined-ast-input" required></textarea>
+            <label>User Data JSON:</label>
+            <textarea id="user-data-input" required></textarea>
+            <button type="submit">Evaluate Rule</button>
+        </form>
+        <div id="evaluate-rule-response"></div>
+    </section>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
